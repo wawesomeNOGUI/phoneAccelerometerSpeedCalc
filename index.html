@@ -79,6 +79,8 @@ var gravMag = 9.81; // maybe set in calibrate gravity??
 var gravDir = new vector3(0, 0, 0); // unit vector containing gravity direction
 var rot = new vector3(0, 0, 0); // rotation in rads
 var vel = new vector3(0, 0, 0); // velocity in m/s
+var maxVel = new vector3(0, 0, 0);
+var maxAccel = new vector3(0, 0, 0);
 var pos = new vector3(0, 0, 0); // position in m
 var deltaRM = new rotationMatrix(0, 0, 0);
 var currentRM = new rotationMatrix(0, 0, 0);
@@ -288,6 +290,17 @@ function accelerometerUpdate(e) {
 
     printData(ctx, "Accel: ", roundData(accel));
 
+    if (Math.abs(accel.x) > Math.abs(maxAccel.x)) {
+        maxAccel.x = accel.x;
+    }
+    if (Math.abs(accel.y) > Math.abs(maxAccel.y)) {
+        maxAccel.y = accel.y;
+    }
+    if (Math.abs(accel.z) > Math.abs(maxAccel.z)) {
+        maxAccel.z = accel.z;
+    }
+    printData(ctx, "Max Accel Recorded: ", roundData(maxAccel))
+
     // printData(ctx, "gX: ", gyro.beta);
     // printData(ctx, "gY: ", gyro.gamma);
     // printData(ctx, "gZ: ", gyro.alpha);
@@ -298,6 +311,17 @@ function accelerometerUpdate(e) {
     printData(ctx, "", "");
 
     printData(ctx, "Velocity: ", roundData(vel));
+
+    if (Math.abs(vel.x) > Math.abs(maxVel.x)) {
+        maxVel.x = vel.x;
+    }
+    if (Math.abs(vel.y) > Math.abs(maxVel.y)) {
+        maxVel.y = vel.y;
+    }
+    if (Math.abs(vel.z) > Math.abs(maxVel.z)) {
+        maxVel.z = vel.z;
+    }
+    printData(ctx, "Max Velocity Recorded: ", roundData(maxVel))
     printData(ctx, "Position: ", roundData(pos));
     printData(ctx, "0.1 * Samples/1000: ", 0.1 + samples/100000);
     printData(ctx, '', '');
