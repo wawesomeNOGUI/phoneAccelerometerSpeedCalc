@@ -1,5 +1,5 @@
 <html>
-    <!-- <button onclick="calibrateGrav();">Calibrate Gravity</button> -->
+    <button id="enableMotion" style="padding: 20px; font-size: 20px;" onclick="enableMotionSensors();">Enable Motion Sensors</button>
     <canvas id="myCanvas"></canvas>
 <script>
 var cnvs = document.getElementById("myCanvas");
@@ -7,7 +7,25 @@ cnvs.width = window.innerWidth;
 cnvs.height = window.innerHeight - 60;
 var ctx = cnvs.getContext("2d");
 
-// window.screen.orientation.lock("portrait"); 
+function enableMotionSensors() {
+    // thank you DeepSeek for suggestion of why didn't work on IOS
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+        DeviceMotionEvent.requestPermission()
+            .then(permissionState => {
+                if (permissionState === 'granted') {
+                    window.addEventListener("devicemotion", accelerometerUpdate, true);
+                } else {
+                    alert("Motion permission denied");
+                }
+            })
+            .catch(console.error);
+    } else {
+        // Non-iOS devices
+        window.addEventListener("devicemotion", accelerometerUpdate, true);
+    }
+
+    document.getElementById("enableMotion").style.display = 'none';
+}
 
 class vector3 {
     constructor(x, y, z) {
@@ -72,18 +90,11 @@ class rotationMatrix {
 }
 
 // vars
-var gravCalibrated = false;
 var samples = 0; // tracks number of IMU samples
-var grav = new vector3(0, 0, 0); // gravity vector contating measured magnitude
-var gravMag = 9.81; // maybe set in calibrate gravity??
-var gravDir = new vector3(0, 0, 0); // unit vector containing gravity direction
-var rot = new vector3(0, 0, 0); // rotation in rads
 var vel = new vector3(0, 0, 0); // velocity in m/s
 var maxVel = new vector3(0, 0, 0);
 var maxAccel = new vector3(0, 0, 0);
 var pos = new vector3(0, 0, 0); // position in m
-var deltaRM = new rotationMatrix(0, 0, 0);
-var currentRM = new rotationMatrix(0, 0, 0);
 
 var stepPrintY = 40;
 var printY = stepPrintY;
@@ -117,28 +128,6 @@ function roundData(data) {
     return tmp;
 }
 
-function degreesToRads(data) {
-    var tmp = {};
-
-    for (const p in data) {
-        tmp[p] = data[p] * Math.PI / 180;
-    }
-
-    return tmp;
-}
-
-// trackRotation takes the gyro data in radians and interval (delta time in milliseconds)
-function trackRotation(g, dt) {
-    // simple integration of gyro velocity
-    rot.x += g.beta * dt * 0.001;
-    rot.y += g.gamma * dt * 0.001;
-    rot.z += g.alpha * dt * 0.001;
-}
-
-function getVelocity() {
-    
-}
-
 // double integrates linear acceleration to track position
 function trackPosition(a, dt) {
     // var prevVel = new vector3(vel.x, vel.y, vel.z);
@@ -160,79 +149,6 @@ function trackPosition(a, dt) {
     // }
 }
 
-// get intitial gravity vector from average of stationary accelerometer samples
-var gravSamples = 0;
-var nGravSamples = 50;
-function calibrateGrav(accelData) {
-    gravCalibrated = false;
-
-    // average gravity sample data
-    grav.x += 1/(gravSamples + 1) * (accelData.x - grav.x);
-    grav.y += 1/(gravSamples + 1) * (accelData.y - grav.y);
-    grav.z += 1/(gravSamples + 1) * (accelData.z - grav.z);
-
-    if (gravSamples < nGravSamples) {
-        gravSamples++;
-    } else {
-        // set gravity unit direction vector
-        gravDir.x = grav.x;
-        gravDir.y = grav.y;
-        gravDir.z = grav.z;
-        gravDir.normalize();
-
-        gravMag = grav.mag();
-
-        gravSamples = 0;
-        gravCalibrated = true;
-    }
-}
-
-// rotates the gravity vector so we can track in which direction
-// we need to remove a vector of magnitude 9.81 to distinguish between
-// gravitational acceleration and linear acceleration (acceleration caused by movement)
-function rotateGravDirVector(g, dt) {
-    deltaRM = new rotationMatrix(-g.gamma * dt * 0.001, -g.beta * dt * 0.001, -g.alpha * dt * 0.001);
-    // rotate gravity vector in opposite direction of gyro rotation
-    // var rm = new rotationMatrix(-g.beta * dt * 0.001, -g.gamma * dt * 0.001, -g.alpha * dt * 0.001);
-    
-    // z to y
-    // var rm = new rotationMatrix(0, 0, -g.alpha * dt * 0.001);
-    // rm.rotateVector3(grav);
-
-    // z to x
-    // var rm = new rotationMatrix(0, -g.beta * dt * 0.001, 0);
-    // rm.rotateVector3(grav);
-
-    deltaRM.rotateVector3(gravDir);
-}
-
-function rotateAccelData(a) {
-    var tmp = new vector3(0, 0, 0);
-    tmp.x = a.x;
-    tmp.y = a.y;
-    tmp.z = a.z;
-
-    currentRM = new rotationMatrix(rot.y, rot.x, rot.z);
-    // rot.x += g.beta * dt * 0.001;
-    // rot.y += g.gamma * dt * 0.001;
-    // rot.z += g.alpha * dt * 0.001;
-    
-    currentRM.rotateVector3(tmp);
-
-    return tmp;
-}
-
-// need to run rotateGravDirVector first
-function subtractGravFromAccel(data) {
-    var tmp = new vector3(0, 0, 0);
-    
-    tmp.x = data.x - (gravDir.x * gravMag);
-    tmp.y = data.y - (gravDir.y * gravMag);
-    tmp.z = data.z - (gravDir.z * gravMag);
-
-    return tmp;
-}
-
 function accelerometerUpdate(e) {
     samples++;
 
@@ -243,50 +159,9 @@ function accelerometerUpdate(e) {
     // clone objects because event data read only 
     // var accel = e.accelerationIncludingGravity;
     var accel = e.acceleration;
-    // var tmp = new vector3(0, 0, 0);
-    // tmp.x = accel.x;
-    // tmp.y = accel.y;
-    // tmp.z = accel.z + 0.19499;
-    // accel = tmp;
-
-    var gyro = e.rotationRate;
     var deltaTime = e.interval; 
 
-    // if (gravCalibrated == false) {
-    //     calibrateGrav(accel);
-
-    //     // dot animation
-    //     var dots = "";
-    //     for (var i = 0; i < gravSamples; i++)
-    //         dots += ".";
-    //     printData(ctx, "Calibrating Gravity", dots);
-
-    //     return;
-    // }
-
-    printData(ctx, "Calibrated Grav Vector: ", roundData(grav));
-    printData(ctx, "Grav Magnitude: ", gravMag);
-    printData(ctx, "Grav Dir: ", roundData(gravDir));
-    printData(ctx, "", "");
-
-    gyro = degreesToRads(gyro);
-
-    trackRotation(gyro, deltaTime);
-
-    // rotate grav vector and subtract from accelerometer data
-    // rotateGravDirVector(gyro, deltaTime);
-    // accel = subtractGravFromAccel(accel);
-
-    // rotates the acceleration data into the x, y, z axis defined when calibrated gravity 
-    // accel = rotateAccelData(accel);
-
     trackPosition(accel, deltaTime);
-
-    //The following two lines are to calculate tilt from grav vector.
-    // var xPosition = Math.atan2(aY, aZ);
-    // var yPosition = Math.atan2(aX, aZ);
-    // ctx.fillText("tilt x: " + xPosition, 20, 200);
-    // ctx.fillText("tilt y: " + yPosition, 20, 240);
 
     printData(ctx, "Accel: ", roundData(accel));
 
@@ -300,10 +175,6 @@ function accelerometerUpdate(e) {
         maxAccel.z = accel.z;
     }
     printData(ctx, "Max Accel Recorded: ", roundData(maxAccel))
-
-    // printData(ctx, "gX: ", gyro.beta);
-    // printData(ctx, "gY: ", gyro.gamma);
-    // printData(ctx, "gZ: ", gyro.alpha);
 
     printData(ctx, "dt: ", deltaTime);
 
@@ -323,7 +194,6 @@ function accelerometerUpdate(e) {
     }
     printData(ctx, "Max Velocity Recorded: ", roundData(maxVel))
     printData(ctx, "Position: ", roundData(pos));
-    printData(ctx, "0.1 * Samples/1000: ", 0.1 + samples/100000);
     printData(ctx, '', '');
 
     printData(ctx, "not including grav: ", e.acceleration);
@@ -338,7 +208,7 @@ if (window.DeviceMotionEvent == undefined) {
 }
 else {
     alert("accelerometer found");
-    window.addEventListener("devicemotion", accelerometerUpdate, true);
+    // window.addEventListener("devicemotion", accelerometerUpdate, true);
 }
 
 // user can tap screen to set velocity data to 0
