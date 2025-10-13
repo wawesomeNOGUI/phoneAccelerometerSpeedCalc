@@ -1,11 +1,17 @@
 <html>
     <button id="enableMotion" style="padding: 20px; font-size: 20px;" onclick="enableMotionSensors();">Enable Motion Sensors</button>
     <canvas id="myCanvas"></canvas>
+    <canvas id="graphCanvas"></canvas>
 <script>
 var cnvs = document.getElementById("myCanvas");
 cnvs.width = window.innerWidth;
-cnvs.height = window.innerHeight - 60;
+cnvs.height = 500;
 var ctx = cnvs.getContext("2d");
+
+var graphCnvs = document.getElementById("graphCanvas");
+graphCnvs.width = window.innerWidth;
+graphCnvs.height = 100;
+var graphCtx = graphCnvs.getContext("2d");
 
 function enableMotionSensors() {
     // thank you DeepSeek for suggestion of why didn't work on IOS
@@ -197,6 +203,17 @@ function accelerometerUpdate(e) {
     printData(ctx, '', '');
 
     printData(ctx, "not including grav: ", e.acceleration);
+
+    // draw graph of data
+    graphCtx.clearRect(samples % graphCnvs.width, 0, 1, graphCnvs.height);
+
+    // accel data
+    graphCtx.fillStyle = "black";
+    graphCtx.fillRect(samples % graphCnvs.width, graphCnvs.height - accel.y, 1, 1);
+
+    // velocity data
+    graphCtx.fillStyle = "red";
+    graphCtx.fillRect(samples % graphCnvs.width, graphCnvs.height - vel.y, 1, 1);
 }
 
 
