@@ -9,8 +9,9 @@ cnvs.height = 500;
 var ctx = cnvs.getContext("2d");
 
 var graphCnvs = document.getElementById("graphCanvas");
-graphCnvs.width = window.innerWidth;
+graphCnvs.width = window.innerWidth / 2;
 graphCnvs.height = 100;
+graphCnvs.style = "transform: scale(10);";
 var graphCtx = graphCnvs.getContext("2d");
 
 function enableMotionSensors() {
@@ -135,6 +136,9 @@ function roundData(data) {
 }
 
 // double integrates linear acceleration to track position
+// a is in meters per second
+// dt is in milliseconds
+// https://developer.mozilla.org/en-US/docs/Web/API/DeviceMotionEvent
 function trackPosition(a, dt) {
     // var prevVel = new vector3(vel.x, vel.y, vel.z);
 
@@ -213,7 +217,7 @@ function accelerometerUpdate(e) {
 
     // velocity data
     graphCtx.fillStyle = "red";
-    graphCtx.fillRect(samples % graphCnvs.width, graphCnvs.height - vel.y, 1, 1);
+    graphCtx.fillRect(samples % graphCnvs.width, graphCnvs.height - (vel.y * graphCnvs.height / 3), 1, 1);   // 100 / 3 to make max value shown 3m/s
 }
 
 
