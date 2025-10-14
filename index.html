@@ -17,12 +17,14 @@ graphCnvs.height = 100;
 ctx.imageSmoothingEnabled = false;
 
 //Scale canvas to fit user's screen
-canvas.style.width = "90vw";
-canvas.style.height = 500;
+graphCnvs.style.width = "90vw";
+graphCnvs.style.height = 500;
 
 var graphCtx = graphCnvs.getContext("2d");
 
-async function writeToClipboard(textToCopy) {
+// store array of accel and velocity data
+
+async function writeToClipboard() {
     document.getElementById("writeToClipboard").innerText = "Writing...";
 
     await navigator.clipboard.writeText(textToCopy);
