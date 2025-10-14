@@ -2,6 +2,8 @@
     <button id="enableMotion" style="padding: 20px; font-size: 20px;" onclick="enableMotionSensors();">Enable Motion Sensors</button>
     <canvas id="myCanvas"></canvas>
     <canvas id="graphCanvas"></canvas>
+    <button id="pauseGraph" onclick="pauseUnpauseGraph();">Pause Graph</button>
+    <button id="writeToClipboard" onclick="writeToClipboard();">Write CSV To Clipboard</button>
 <script>
 var cnvs = document.getElementById("myCanvas");
 cnvs.width = window.innerWidth;
@@ -11,8 +13,30 @@ var ctx = cnvs.getContext("2d");
 var graphCnvs = document.getElementById("graphCanvas");
 graphCnvs.width = window.innerWidth / 2;
 graphCnvs.height = 100;
-graphCnvs.style = "transform: scale(10);";
+//Don't Anti-Alias Scaled canvas
+ctx.imageSmoothingEnabled = false;
+
+//Scale canvas to fit user's screen
+canvas.style.width = "90vw";
+canvas.style.height = 500;
+
 var graphCtx = graphCnvs.getContext("2d");
+
+async function writeToClipboard(textToCopy) {
+    document.getElementById("writeToClipboard").innerText = "Writing...";
+
+    await navigator.clipboard.writeText(textToCopy);
+    
+    document.getElementById("writeToClipboard").innerText = "Write CSV To Clipboard";
+}
+
+function pauseUnpauseGraph() {
+    if (document.getElementById("pauseGraph").innerText == "Pause Graph") {
+        document.getElementById("pauseGraph").innerText = "Unpause Graph";
+    } else {
+        document.getElementById("pauseGraph").innerText == "Pause Graph"
+    }
+}
 
 function enableMotionSensors() {
     // thank you DeepSeek for suggestion of why didn't work on IOS
@@ -209,6 +233,10 @@ function accelerometerUpdate(e) {
     printData(ctx, "not including grav: ", e.acceleration);
 
     // draw graph of data
+    if (document.getElementById("pauseGraph").innerText == "Unpause Graph") {
+        return;
+    }
+
     graphCtx.clearRect(samples % graphCnvs.width, 0, 1, graphCnvs.height);
 
     // accel data
