@@ -3,7 +3,8 @@
     <canvas id="myCanvas"></canvas>
     <canvas id="graphCanvas"></canvas>
     <button id="pauseGraph" onclick="pauseUnpauseGraph();">Pause Graph</button>
-    <button id="writeToClipboard" onclick="writeToClipboard();">Write CSV To Clipboard</button>
+    <button id="outputCSV" onclick="outputCSV();">Output CSV</button>
+    <div id="CSV_DATA_DIV" style="display: none;"></div>
 <script>
 var cnvs = document.getElementById("myCanvas");
 cnvs.width = window.innerWidth;
@@ -26,8 +27,8 @@ var graphCtx = graphCnvs.getContext("2d");
 // store json objects {step: 0, accel: 0, vel: 0}
 var accelAndVelData = {};
 
-async function writeToClipboard() {
-    document.getElementById("writeToClipboard").innerText = "Writing...";
+async function outputCSV() {
+    document.getElementById("outputCSV").innerText = "Writing...";
 
     var textToCopy;
 
@@ -35,9 +36,13 @@ async function writeToClipboard() {
         textToCopy += key + ", " + accelAndVelData[key]["accel"] + ", " + accelAndVelData[key]["vel"] + "\n ";
     }
 
-    await navigator.clipboard.writeText(textToCopy);
+    // write to clipboard
+    // await navigator.clipboard.writeText(textToCopy);
     
-    document.getElementById("writeToClipboard").innerText = "Write CSV To Clipboard";
+    document.getElementById("outputCSV").innerText = "Ouput CSV";
+
+    document.getElementById('CSV_DATA_DIV').style.display = 'block';
+    document.getElementById('CSV_DATA_DIV').innerText = textToCopy;
 }
 
 function pauseUnpauseGraph() {
