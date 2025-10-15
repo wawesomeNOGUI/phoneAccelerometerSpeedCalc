@@ -23,9 +23,17 @@ graphCnvs.style.height = 500;
 var graphCtx = graphCnvs.getContext("2d");
 
 // store array of accel and velocity data
+// store json objects {step: 0, accel: 0, vel: 0}
+var accelAndVelData = {};
 
 async function writeToClipboard() {
     document.getElementById("writeToClipboard").innerText = "Writing...";
+
+    var textToCopy;
+
+    for (const key in accelAndVelData) {
+        textToCopy += key + ", " + accelAndVelData[key]["accel"] + ", " + accelAndVelData[key]["vel"] + "\n ";
+    }
 
     await navigator.clipboard.writeText(textToCopy);
     
@@ -248,6 +256,10 @@ function accelerometerUpdate(e) {
     // velocity data
     graphCtx.fillStyle = "red";
     graphCtx.fillRect(samples % graphCnvs.width, graphCnvs.height - (vel.y * graphCnvs.height / 3), 1, 1);   // 100 / 3 to make max value shown 3m/s
+
+    // save graph to storage map (json object)
+    // user can then request to export this map as a CSV file
+    accelAndVelData[samples] = {"accel": accel.y, "vel": vel.y};
 }
 
 
