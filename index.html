@@ -178,24 +178,30 @@ function roundData(data) {
 // a is in meters per second
 // dt is in milliseconds
 // https://developer.mozilla.org/en-US/docs/Web/API/DeviceMotionEvent
+var prevAccel = new vector3(0, 0, 0);
 function trackPosition(a, dt) {
-    // var prevVel = new vector3(vel.x, vel.y, vel.z);
+    // integrate velocity using trapezoidal rule numerical integration
+    vel.x += dt * 0.001 * 0.5 * (a.x + prevAccel.x);
+    vel.y += dt * 0.001 * 0.5 * (a.y + prevAccel.y);
+    vel.z += dt * 0.001 * 0.5 * (a.z + prevAccel.z);
 
-    // get velocity
-    // if (Math.abs(a.x) > 0.1 + samples/100000) {     // stop trusting accel data as much as time goes on, need to recalibrate after a while
-        vel.x += a.x * dt * 0.001;
-        pos.x += vel.x * dt * 0.001;
-    // }
+    prevAccel = a;
 
-    // if (Math.abs(a.y) > 0.1 + samples/100000) {
-        vel.y += a.y * dt * 0.001;
-        pos.y += vel.y * dt * 0.001;
-    // }
+    // // get velocity
+    // // if (Math.abs(a.x) > 0.1 + samples/100000) {     // stop trusting accel data as much as time goes on, need to recalibrate after a while
+    //     vel.x += a.x * dt * 0.001;  // using left rectangle sum (Riemann sum)
+    //     pos.x += vel.x * dt * 0.001;
+    // // }
 
-    // if (Math.abs(a.z) > 0.1 + samples/100000) {
-        vel.z += a.z * dt * 0.001;
-        pos.z += vel.z * dt * 0.001;
-    // }
+    // // if (Math.abs(a.y) > 0.1 + samples/100000) {
+    //     vel.y += a.y * dt * 0.001;
+    //     pos.y += vel.y * dt * 0.001;
+    // // }
+
+    // // if (Math.abs(a.z) > 0.1 + samples/100000) {
+    //     vel.z += a.z * dt * 0.001;
+    //     pos.z += vel.z * dt * 0.001;
+    // // }
 }
 
 function accelerometerUpdate(e) {
