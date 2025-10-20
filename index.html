@@ -33,6 +33,7 @@ async function outputCSV() {
     var textToCopy;
 
     for (const key in accelAndVelData) {
+        // key is the time in seconds
         textToCopy += key + ", " + accelAndVelData[key]["accel"] + ", " + accelAndVelData[key]["vel"] + "\n ";
     }
 
@@ -137,6 +138,7 @@ class rotationMatrix {
 
 // vars
 var samples = 0; // tracks number of IMU samples
+var time = 0; // tracks time from deltaTime between samples
 var vel = new vector3(0, 0, 0); // velocity in m/s
 var maxVel = new vector3(0, 0, 0);
 var maxAccel = new vector3(0, 0, 0);
@@ -216,6 +218,8 @@ function accelerometerUpdate(e) {
     var accel = e.acceleration;
     var deltaTime = e.interval; 
 
+    time += deltaTime;
+
     trackPosition(accel, deltaTime);
 
     printData(ctx, "Accel: ", roundData(accel));
@@ -270,7 +274,7 @@ function accelerometerUpdate(e) {
 
     // save graph to storage map (json object)
     // user can then request to export this map as a CSV file
-    accelAndVelData[samples] = {"accel": accel.y, "vel": vel.y};
+    accelAndVelData[time] = {"accel": accel.y, "vel": vel.y};
 }
 
 
